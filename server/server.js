@@ -1,68 +1,87 @@
 const express = require('express');
 const app = express();
-const mongodb = require('mongodb').MongoClient;
-const fs = require('fs');
-const fastcsv = require('fast-csv');
+const MongoClient = require('mongodb').MongoClient;
 const csvtojson = require('csvtojson');
+const fs = require("fs");
 require("dotenv").config()
 
-const PORT = process.env.PORT || 3003;
+const MONGODBURI = process.env.MONGODBURI || 'mongodb://localhost:27017/projectData';
+const PORT = process.env.PORT || 5000;
 
+let csvData = []; //data from gm_data.csv
+let jsonData = []; //data from db
 
 //middleware
 app.use(express.json());
 app.use(express.urlencoded({extended: false}));
 app.use(express.static(__dirname + 'public'));
 
+//constructor for elements of gm_data.csv
+function customer(date, client, project, projectCode, hours, billable, firstName, lastName, billableRate) {
+  this.date = date;
+  this.client = client;
+  this.project = project;
+  this.projectCode = projectCode;
+  this.hours = hours;
+  this.billable = billable;
+  this.firstName = firstName;
+  this.lastName = lastName;
+  this.billableRate = billableRate;
+}
 
-// Global Configuration
-const MONGODBURI = process.env.MONGODBURI || 'mongodb://localhost:27017/projectData';
+////===========================================================
+////CONECT TO MONGODB - INSERT .CSV DATA TO MONGO-ATLAS DB
+////===========================================================
+// csvtojson()
+//   .fromFile('./gm_data.csv')
+//   .then(data => {
+//     csvData = data
+//     console.log(csvData);
 
-
-let stream = fs.createReadStream('./gm_data.csv');
-let csvData = [];
-let csvStream = fastcsv
-  .parse()
-  .on('data', (data) => {
-    csvData.push({
-      date: data[0],
-      client: data[1],
-      project: data[2],
-      projectCode: data[3],
-      hours: data[4],
-      billable: data[5],
-      firstName: data[6],
-      lastName: data[7],
-      billableRate: data[8]
-    })
-  })
-  .on('end', () => {
-    csvData.shift();
-    console.log(csvData);
-
-    mongodb.connect(
-      MONGODBURI, {
-        useNewUrlParser: true, 
-        useUnifiedTopology: true
-    },
-      (err, client) => {
-        if (err) throw err;
-          client
-            .db('gm-clients')
-            .collection('clients')
-            // .insertMany(csvData, (err, res) => {
-            //   if (err) throw err;
-            //   console.log(`Inserted: ${res.insertedCount} rows`);
-            //   client.close
-            // });
-      }
-    );
-  });
-
-stream.pipe(csvStream);
+//     MongoClient.connect(MONGODBURI, {
+//       useNewUrlParser: true,
+//       useUnifiedTopology: true,
+//     },
+//       (err, client) => {
+//         if (err) throw err;
+//         console.log("Established Connection To MongoDB");
+//         client
+//           .db('gm-clients')
+//           .collection('clients')
+//           .insertMany(csvData, (err, res) => {
+//             if (err) throw err;
+//             console.log(`Inserted: ${res.insertedCount} rows`);
+//             client.close
+//           });
+//       }
+//     );
+// });
 
 
-//TEST ROUTE --- // http://localhost:3003/
+////===========================================================
+////CONECT TO MONGODB - CONVERT UPLOADED DB DATA TO JSON FILE
+////===========================================================
+// MongoClient.connect(
+//   MONGODBURI, {
+//     useNewUrlParser: true, 
+//     useUnifiedTopology: true
+// }, (err, client) => {
+//   if (err) throw err;
+//   console.log("Established Connection To MongoDB");
+//   client.db('gm-clients').collection('clients').find().toArray(function (err, results) {
+//     results.forEach(function (el) {
+//       jsonData.push(new customer(el.date, el.client, el.project, el.projectCode, el.hours, el.billable, el.firstName, el.lastName, el.billableRate))
+//     })
+//     fs.writeFileSync('seed.json', JSON.stringify(jsonData, null, 9), (err) => {
+//       if (err) throw err;
+//     });
+//     client.close();
+//   })
+// })
+
+
+
+//TEST ROUTE --- // http://localhost:5000/
 app.get('/', (req, res) => {
   res.send('Say Hello to Zee Server')
 })
