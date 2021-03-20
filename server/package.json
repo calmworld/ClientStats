@@ -11,9 +11,13 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "csv-parse": "^4.15.3",
     "csvtojson": "^2.0.10",
     "dotenv": "^8.2.0",
     "express": "^4.17.1",
-    "mongoose": "^5.12.1"
+    "fast-csv": "^4.3.6",
+    "fs": "^0.0.1-security",
+    "mongoose": "^5.12.1",
+    "path": "^0.12.7"
   }
 }
