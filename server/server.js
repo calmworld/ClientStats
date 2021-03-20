@@ -10,8 +10,10 @@ const PORT = process.env.PORT || 3003;
 
 require("dotenv").config()
 
+const Customer = require('./models/customer.js');
 
-
+//middleware
+app.use(express.json());
 //body-parser
 //extended: false - has to do with how the data is being parsed (and what kind can be parsed).
 //recognize the incoming object as strings or arrays.
@@ -24,18 +26,35 @@ app.use(express.static(__dirname + 'public'));
 
 // Global Configuration
 const MONGODBURI = process.env.MONGODBURI || 'mongodb://localhost:27017/projectData';
-//const db = mongodb.connection;
 
 
 csvtojson()
-  .fromFile('./gm_data.csv')
-  .then(csvData => {
+  .fromFile('./gm_data.csv', {
+    headers: true,
+    ignoreEmpty: true
+  })
+  .then((csvData) => {
     console.log(csvData);
 
     mongodb.connect(MONGODBURI, {
       useNewUrlParser: true,
       useUnifiedTopology: true,
     }, 
+      (err, client) => {
+        if (err) {
+          throw err;
+        } else {
+          console.log("Connected correctly to server");
+          client
+            .db('gm-clients')
+            .collection('clients')
+            .find(csvData, (err, res) => {
+              if (err) throw err;
+              console.log(`Found: ${res.insertedCount} rows`);
+              client.close()
+            })
+        }
+      }
       // (err, client) => {
       //   if (err) throw err;
       //   client
@@ -50,12 +69,17 @@ csvtojson()
     );
 });
 
+//TEST ROUTE --- // http://localhost:3003/
+app.get('/', (req, res) => {
+  res.send('Say Hello to Meeeeee')
+})
 
-// Connection Error/Success 
-db.on('error', (err) => console.log(err.message + ' is Mongod not running?'));
-db.on('connected', () => console.log('mongo connected: ', MONGODBURI));
-db.on('disconnected', () => console.log('mongo disconnected'));
-
+//Index Route -- // http://localhost:3003/customers
+app.get('/customers', (req, res) => {
+  Customer.find({}, 'client', (err, FoundClients) => {
+    res.json({FoundClients});
+  })
+})
 
 //routes
 const customerRoutes = require('./routes/customer.js');
