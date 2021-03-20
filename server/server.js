@@ -1,52 +1,66 @@
-// const http = require('http');
 const express = require('express');
+// const mongoose = require('mongoose');
 const app = express();
-// const bodyParser = require('body-parser');
-const mongoose = require('mongoose');
 
-const PORT = 3003;
+const mongodb = require('mongodb').MongoClient;
 
-// //Data
-// const customer = require('./models/customer');
+const csvtojson = require('csvtojson');
 
-// const path = require('path');
+const PORT = process.env.PORT || 3003;
+
+require("dotenv").config()
+
+
 
 //body-parser
-//extended: false - has to do with how the data is being parsed (and what kind can be parsed). For this unit, we'll just set this to false.
+//extended: false - has to do with how the data is being parsed (and what kind can be parsed).
 //recognize the incoming object as strings or arrays.
 app.use(express.urlencoded({extended: false}));
 
 //tells express to try to match requests with files in the directory called 'public'
 app.use(express.static(__dirname + 'public'));
 
+//const whitelist = ['http://localhost:3000'];
 
-//================================================
 // Global Configuration
-//================================================
-const mongoURI = 'mongodb://localhost:27017/customerdb';
-const db = mongoose.connection;
+const MONGODBURI = process.env.MONGODBURI || 'mongodb://localhost:27017/projectData';
+//const db = mongodb.connection;
 
-//================================================
-// Connect to Mongo
-//================================================
-mongoose.connect(mongoURI, {
-  useFindAndModify: false,
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-}, () => {
-  console.log('the connection with mongod is established');
+
+csvtojson()
+  .fromFile('./gm_data.csv')
+  .then(csvData => {
+    console.log(csvData);
+
+    mongodb.connect(MONGODBURI, {
+      useNewUrlParser: true,
+      useUnifiedTopology: true,
+    }, 
+      (err, client) => {
+        if (err) throw err;
+        client
+          .db('gm-clients')
+          .collection('clients')
+          .insertMany(csvData, (err, res) => {
+            if (err) throw err;
+            console.log(`Inserted: ${res.insertedCount} rows`);
+            client.close
+          });
+      }
+    );
 });
+
 //================================================
 // Connection Error/Success - optional but can be helpful
 // Define callback functions for various events
 //================================================
-db.on('error', (err) => console.log(err.message + ' is Mongod not running?'));
-db.on('connected', () => console.log('mongo connected: ', mongoURI));
-db.on('disconnected', () => console.log('mongo disconnected'));
+// db.on('error', (err) => console.log(err.message + ' is Mongod not running?'));
+// db.on('connected', () => console.log('mongo connected: ', MONGODBURI));
+// db.on('disconnected', () => console.log('mongo disconnected'));
 
 
 //routes
-const customerRoutes = require('./routes/customer');
+const customerRoutes = require('./routes/customer.js');
 app.use('/customer', customerRoutes);
 
 
