@@ -36,27 +36,25 @@ csvtojson()
       useNewUrlParser: true,
       useUnifiedTopology: true,
     }, 
-      (err, client) => {
-        if (err) throw err;
-        client
-          .db('gm-clients')
-          .collection('clients')
-          .insertMany(csvData, (err, res) => {
-            if (err) throw err;
-            console.log(`Inserted: ${res.insertedCount} rows`);
-            client.close
-          });
-      }
+      // (err, client) => {
+      //   if (err) throw err;
+      //   client
+      //     .db('gm-clients')
+      //     .collection('clients')
+      //     .insertMany(csvData, (err, res) => {
+      //       if (err) throw err;
+      //       console.log(`Inserted: ${res.insertedCount} rows`);
+      //       client.close
+      //     });
+      // }
     );
 });
 
-//================================================
-// Connection Error/Success - optional but can be helpful
-// Define callback functions for various events
-//================================================
-// db.on('error', (err) => console.log(err.message + ' is Mongod not running?'));
-// db.on('connected', () => console.log('mongo connected: ', MONGODBURI));
-// db.on('disconnected', () => console.log('mongo disconnected'));
+
+// Connection Error/Success 
+db.on('error', (err) => console.log(err.message + ' is Mongod not running?'));
+db.on('connected', () => console.log('mongo connected: ', MONGODBURI));
+db.on('disconnected', () => console.log('mongo disconnected'));
 
 
 //routes
